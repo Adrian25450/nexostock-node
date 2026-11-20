@@ -61,7 +61,6 @@ app.get('/api/products',auth,asyncRoute(async(req,res)=>{
   const where={active:true};
   if(q)where.OR=[{sku:{contains:q}},{name:{contains:q}},{category:{contains:q}}];
   if(category&&category!=='Todas')where.category=category;
-  if(stock==='low')where.quantity={lte:0};
   const products=await prisma.product.findMany({where,orderBy:{name:'asc'},include:{supplier:{select:{id:true,name:true}}},take:500});
   const full=stock==='low'?products.filter(p=>p.quantity<=p.minStock):products;
   res.json({items:full,count:full.length});
@@ -117,6 +116,7 @@ app.get('/api/export/products.csv',auth,asyncRoute(async(req,res)=>{
 app.use('/api',(req,res)=>fail(res,404,'Ruta no encontrada.'));
 app.use((error,req,res,next)=>{
   if(error.code==='P2002')return fail(res,409,'Ese código SKU o nombre ya existe.');
+  if(error.code==='P2003')return fail(res,400,'El proveedor seleccionado no existe.');
   if(error.code==='P2025')return fail(res,404,'Registro no encontrado.');
   console.error('NexoStock request failed:',error.message);
   res.status(error.status||500).json({error:error.status?error.message:'Error interno. Inténtalo de nuevo.'});
