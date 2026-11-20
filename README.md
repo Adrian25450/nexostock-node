@@ -31,7 +31,7 @@ Abre `http://localhost:3000`.
 
 **Cuenta demostrativa:** `admin@nexostock.local` · **Contraseña:** `NexoDemo2026!`
 
-La cuenta es solo para pruebas locales. Cambia `SESSION_SECRET`, no uses contraseñas reales y no expongas esta demo a internet.
+La cuenta es solo para pruebas locales. También se crea el usuario de rol Operador: `operador@nexostock.local` · `OperadorDemo2026!`. Cambia `SESSION_SECRET`, no uses contraseñas reales y no expongas esta demo a internet.
 
 ## Estructura
 
@@ -59,4 +59,5 @@ public/               interfaz web responsive
 ## Alcance
 
 Proyecto de portafolio con información ficticia y ejecución local. Una puesta en producción requiere HTTPS, gestión segura de secretos, copias de respaldo, recuperación de cuenta, revisión de configuración, pruebas de seguridad y base de datos administrada.
+
 
