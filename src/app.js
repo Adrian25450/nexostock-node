@@ -11,6 +11,7 @@ const { PrismaClient } = require('@prisma/client');
 
 const app=express(), prisma=new PrismaClient();
 const dataDir=path.join(__dirname,'..','data'); fs.mkdirSync(dataDir,{recursive:true});
+if(process.env.NODE_ENV==='production'&&!process.env.SESSION_SECRET)throw new Error('SESSION_SECRET debe configurarse antes del despliegue.');
 app.disable('x-powered-by'); app.use(helmet()); app.use(express.json({limit:'20kb'}));
 app.use(session({store:new SQLiteStore({db:'sessions.db',dir:dataDir}),name:'nexostock.sid',secret:process.env.SESSION_SECRET||'local-demo-only-change-this-secret',resave:false,saveUninitialized:false,cookie:{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',maxAge:8*60*60*1000}}));
 app.use(express.static(path.join(__dirname,'..','public')));
@@ -51,9 +52,10 @@ app.get('/api/dashboard',auth,asyncRoute(async(req,res)=>{
     prisma.product.groupBy({by:['category'],where:{active:true},_sum:{quantity:true},_count:{id:true}}),
     prisma.movement.findMany({take:8,orderBy:{createdAt:'desc'},include:{product:{select:{sku:true,name:true}},user:{select:{name:true}}}})
   ]);
-  const lowStock=products.filter(p=>p.quantity<=p.minStock).sort((a,b)=>a.quantity-b.quantity).slice(0,8);
+  const alerts=products.filter(p=>p.quantity<=p.minStock).sort((a,b)=>a.quantity-b.quantity);
+  const lowStock=alerts.slice(0,8);
   const inventoryValue=products.reduce((sum,p)=>sum+p.quantity*p.unitPrice,0);
-  res.json({metrics:{products:aggregate._count.id||0,units:aggregate._sum.quantity||0,inventoryValue,lowStock:lowStock.length},lowStock:lowStock.map(p=>({...p,stockStatus:p.quantity===0?'AGOTADO':'BAJO'})),categories:byCategory,recent});
+  res.json({metrics:{products:aggregate._count.id||0,units:aggregate._sum.quantity||0,inventoryValue,lowStock:alerts.length},lowStock:lowStock.map(p=>({...p,stockStatus:p.quantity===0?'AGOTADO':'BAJO'})),categories:byCategory,recent});
 }));
 
 app.get('/api/products',auth,asyncRoute(async(req,res)=>{
